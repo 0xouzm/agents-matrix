@@ -1,0 +1,14 @@
+# Per-skill USDC pricing for x402 payment gate.
+# Format: "$<amount>" — parsed by x402 PaymentOption.
+
+default = "$0.01"
+
+[skills]
+convert        = "$0.05"
+metadata_read  = "$0.01"
+metadata_write = "$0.02"
+metadata_fetch = "$0.03"
+polish         = "$0.05"
+library_search = "$0.01"
+library_add    = "$0.03"
+library_export = "$0.03"

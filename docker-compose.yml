@@ -1,0 +1,21 @@
+services:
+  calibre-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${AM_PORT:-9000}:9000"
+    env_file:
+      - .env
+    volumes:
+      - ${AM_LIBRARY_PATH:-./data/library}:/library
+      - agent-tmp:/tmp/agents-matrix
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  agent-tmp:

@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+
+# Environment secrets
+.env
+.env.local
+.env.production
+
+# Logs
+logs/
+
+# Temp
+/tmp/
+*.tmp
+
+# Docker build artifacts
+calibre-harness/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/

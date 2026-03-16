@@ -15,12 +15,16 @@ fi
 set -a; source .env; set +a
 
 # Validate required vars
-for var in AM_ANTHROPIC_API_KEY AM_WALLET_ADDRESS AM_LIBRARY_PATH; do
+for var in AM_ANTHROPIC_API_KEY AM_LIBRARY_PATH; do
   if [ -z "${!var:-}" ]; then
     echo "ERROR: $var is not set in .env"
     exit 1
   fi
 done
+
+if [ -z "${AM_WALLET_ADDRESS:-}" ]; then
+  echo "NOTICE: AM_WALLET_ADDRESS not set — x402 payment gate disabled"
+fi
 
 # ── Copy cli-anything-calibre for Docker build context ──
 HARNESS_SRC="../../calibre/agent-harness"

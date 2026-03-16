@@ -32,9 +32,10 @@ class Settings(BaseSettings):
     rpc_url: str = ""
     pinata_jwt: str = ""
 
-    # ── Anthropic (agent loop) ──
-    anthropic_api_key: str = ""
-    anthropic_model: str = "claude-haiku-4-5-20251001"
+    # ── LLM (agent loop — OpenAI-compatible API) ──
+    llm_api_key: str = ""
+    llm_base_url: str = "https://api.deepseek.com"
+    llm_model: str = "deepseek-chat"
 
 
 class Pricing:

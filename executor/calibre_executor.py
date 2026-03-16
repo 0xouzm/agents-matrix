@@ -54,6 +54,7 @@ class CalibreExecutor(AgentExecutor):
                 return await run_agent_loop(
                     prompt,
                     session,
-                    api_key=self._settings.anthropic_api_key,
-                    model=self._settings.anthropic_model,
+                    api_key=self._settings.llm_api_key,
+                    model=self._settings.llm_model,
+                    base_url=self._settings.llm_base_url,
                 )

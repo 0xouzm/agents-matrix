@@ -1,11 +1,12 @@
-"""Claude API agentic loop with MCP tool bridge."""
+"""LLM agentic loop with MCP tool bridge (OpenAI-compatible API)."""
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
-import anthropic
+from openai import AsyncOpenAI
 from mcp import ClientSession
 
 logger = logging.getLogger(__name__)
@@ -19,16 +20,19 @@ SYSTEM_PROMPT = (
 MAX_TURNS = 10
 
 
-def mcp_tools_to_claude(mcp_tools: list) -> list[dict[str, Any]]:
-    """Convert MCP tool definitions to Anthropic API tool format."""
-    claude_tools = []
+def mcp_tools_to_openai(mcp_tools: list) -> list[dict[str, Any]]:
+    """Convert MCP tool definitions to OpenAI function-calling format."""
+    openai_tools = []
     for tool in mcp_tools:
-        claude_tools.append({
-            "name": tool.name,
-            "description": tool.description or "",
-            "input_schema": tool.inputSchema,
+        openai_tools.append({
+            "type": "function",
+            "function": {
+                "name": tool.name,
+                "description": tool.description or "",
+                "parameters": tool.inputSchema,
+            },
         })
-    return claude_tools
+    return openai_tools
 
 
 async def run_agent_loop(
@@ -37,69 +41,56 @@ async def run_agent_loop(
     *,
     api_key: str,
     model: str,
+    base_url: str,
 ) -> str:
-    """Run an agentic loop: Claude calls MCP tools until it produces a final answer.
-
-    Returns the final text response from Claude.
-    """
+    """Run an agentic loop: LLM calls MCP tools until it produces a final answer."""
     tools_result = await mcp_session.list_tools()
-    claude_tools = mcp_tools_to_claude(tools_result.tools)
-    logger.info("MCP tools loaded: %s", [t["name"] for t in claude_tools])
+    openai_tools = mcp_tools_to_openai(tools_result.tools)
+    logger.info("MCP tools loaded: %s", [t["function"]["name"] for t in openai_tools])
 
-    client = anthropic.AsyncAnthropic(api_key=api_key)
-    messages: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
+    client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+    messages: list[dict[str, Any]] = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": prompt},
+    ]
 
     for turn in range(MAX_TURNS):
-        response = await client.messages.create(
+        response = await client.chat.completions.create(
             model=model,
             max_tokens=4096,
-            system=SYSTEM_PROMPT,
-            tools=claude_tools,
+            tools=openai_tools,
             messages=messages,
         )
 
-        if response.stop_reason == "end_turn":
-            return _extract_text(response)
+        choice = response.choices[0]
 
-        tool_use_blocks = [b for b in response.content if b.type == "tool_use"]
-        if not tool_use_blocks:
-            return _extract_text(response)
+        if choice.finish_reason != "tool_calls":
+            return choice.message.content or ""
 
-        messages.append({"role": "assistant", "content": response.content})
+        messages.append(choice.message)
 
-        tool_results = []
-        for block in tool_use_blocks:
-            logger.info("Tool call [turn %d]: %s(%s)", turn + 1, block.name, block.input)
+        for tool_call in choice.message.tool_calls:
+            fn = tool_call.function
+            logger.info("Tool call [turn %d]: %s(%s)", turn + 1, fn.name, fn.arguments)
             try:
-                result = await mcp_session.call_tool(block.name, arguments=block.input)
+                args = json.loads(fn.arguments) if fn.arguments else {}
+                result = await mcp_session.call_tool(fn.name, arguments=args)
                 content = _format_tool_result(result)
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": content,
-                })
             except Exception as exc:
-                logger.warning("Tool %s failed: %s", block.name, exc)
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": str(exc),
-                    "is_error": True,
-                })
+                logger.warning("Tool %s failed: %s", fn.name, exc)
+                content = f"Error: {exc}"
 
-        messages.append({"role": "user", "content": tool_results})
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "content": content,
+            })
 
-    return _extract_text(response)
-
-
-def _extract_text(response: anthropic.types.Message) -> str:
-    """Extract text content from a Claude response."""
-    parts = [b.text for b in response.content if b.type == "text"]
-    return "\n".join(parts) if parts else ""
+    return choice.message.content or ""
 
 
 def _format_tool_result(result: Any) -> str:
-    """Format MCP tool result as string for Claude."""
+    """Format MCP tool result as string."""
     if hasattr(result, "content") and result.content:
         parts = []
         for item in result.content:

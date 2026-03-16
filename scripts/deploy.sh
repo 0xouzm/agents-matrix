@@ -15,7 +15,7 @@ fi
 set -a; source .env; set +a
 
 # Validate required vars
-for var in AM_ANTHROPIC_API_KEY AM_LIBRARY_PATH; do
+for var in AM_LLM_API_KEY AM_LIBRARY_PATH; do
   if [ -z "${!var:-}" ]; then
     echo "ERROR: $var is not set in .env"
     exit 1

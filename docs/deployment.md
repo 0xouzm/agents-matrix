@@ -4,7 +4,7 @@
 
 - Docker & Docker Compose v2
 - A Calibre library directory on the host
-- Anthropic API key
+- LLM API key (DeepSeek, OpenAI, or any OpenAI-compatible provider)
 - (Optional) EVM wallet for x402 payment gate
 
 ## Quick Start
@@ -19,7 +19,7 @@ Edit `.env` with your values:
 
 ```env
 # Required
-AM_ANTHROPIC_API_KEY=sk-ant-...
+AM_LLM_API_KEY=sk-...
 AM_LIBRARY_PATH=/path/to/calibre/library
 
 # Payment (optional — omit AM_WALLET_ADDRESS to disable x402)
@@ -29,7 +29,7 @@ AM_CHAIN_NETWORK=eip155:84532
 
 # Tuning
 AM_PORT=9000
-AM_ANTHROPIC_MODEL=claude-haiku-4-5-20251001
+AM_LLM_MODEL=deepseek-chat
 ```
 
 ### 2. Deploy
@@ -183,7 +183,7 @@ Expected: ERC-721 minted on Base Sepolia with agent metadata on IPFS.
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `CLI error: command not found` | Calibre not installed in container | Check Dockerfile installs `calibre` package |
-| `anthropic.AuthenticationError` | Bad API key | Verify `AM_ANTHROPIC_API_KEY` in `.env` |
+| `AuthenticationError` | Bad API key | Verify `AM_LLM_API_KEY` in `.env` |
 | `FileNotFoundError: cli-anything-calibre` | MCP subprocess can't find CLI binary | Ensure `cli-anything-calibre` is installed: `uv run which cli-anything-calibre` |
 | `502` from reverse proxy | App not ready yet | Wait for health check to pass; check `docker compose logs` |
 | `402` on every request | x402 payment gate active | Either provide payment headers or unset `AM_WALLET_ADDRESS` for testing |
@@ -209,4 +209,4 @@ cli-anything-calibre CLI
 Calibre backends (ebook-convert, calibredb, ebook-meta)
 ```
 
-The Claude agent loop sits between the executor and MCP server, using tool-use to understand intent and chain multiple tool calls as needed.
+The LLM agent loop sits between the executor and MCP server, using tool-use to understand intent and chain multiple tool calls as needed.

@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-# Install system dependencies and Foundry cast
+# System dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl git && \
     rm -rf /var/lib/apt/lists/*
@@ -15,8 +15,14 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-# Copy cli-anything-cast (path dependency, placed by deploy.sh)
-COPY cast-harness/ /app/cast-harness/
+# Clone cast harness from git (sparse checkout — only cast/agent-harness)
+ARG HARNESS_REPO=https://github.com/0xouzm/CLI-Anything.git
+ARG HARNESS_REF=main
+RUN git clone --depth 1 --branch ${HARNESS_REF} --filter=blob:none --sparse \
+      ${HARNESS_REPO} /tmp/cli-anything && \
+    cd /tmp/cli-anything && git sparse-checkout set cast/agent-harness && \
+    cp -r cast/agent-harness /app/cast-harness && \
+    rm -rf /tmp/cli-anything
 
 # Copy application code
 COPY . .
@@ -24,7 +30,7 @@ COPY . .
 # Rewrite path dependency for Docker context
 RUN sed -i 's|path = "../../CLI-Anything/cast/agent-harness"|path = "cast-harness"|' pyproject.toml
 
-# Install dependencies (regenerate lockfile for new path)
+# Install dependencies
 RUN uv lock --prerelease=allow && uv sync --prerelease=allow
 
 EXPOSE 9000

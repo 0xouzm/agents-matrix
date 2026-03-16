@@ -17,11 +17,13 @@ The Docker image handles everything: Foundry cast, Python, cli-anything-cast har
 cp .env.example .env
 ```
 
-Edit `.env` — only two fields required:
+Edit `.env` — set your LLM key and at least one RPC URL:
 
 ```env
-AM_LLM_API_KEY=sk-...                     # DeepSeek / OpenAI / any compatible
-AM_DEFAULT_RPC_URL=https://eth.drpc.org    # Public Ethereum RPC (free tier is fine)
+AM_LLM_API_KEY=sk-...                                        # DeepSeek / OpenAI / any compatible
+AM_DEFAULT_CHAIN=ethereum                                     # Default chain for queries
+AM_RPC_ETHEREUM=https://your-ethereum-rpc.quiknode.pro/key/   # At least one chain required
+AM_RPC_ARBITRUM=https://your-arbitrum-rpc.quiknode.pro/key/   # Add more chains as needed
 ```
 
 ### 2. Deploy
@@ -161,7 +163,7 @@ FastAPI + x402 middleware (payment gate)
 CastExecutor (A2A AgentExecutor)
     |  spawns stdio subprocess
     v
-MCP Server (8 Cast tools)
+MCP Server (9 Cast tools, multi-chain)
     |  subprocess calls
     v
 cli-anything-cast CLI

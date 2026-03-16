@@ -1,0 +1,67 @@
+default = "ethereum"
+
+[chains.ethereum]
+name = "Ethereum"
+chain_id = 1
+explorer = "https://etherscan.io"
+symbol = "ETH"
+
+[chains.arbitrum]
+name = "Arbitrum One"
+chain_id = 42161
+explorer = "https://arbiscan.io"
+symbol = "ETH"
+
+[chains.base]
+name = "Base"
+chain_id = 8453
+explorer = "https://basescan.org"
+symbol = "ETH"
+
+[chains.polygon]
+name = "Polygon"
+chain_id = 137
+explorer = "https://polygonscan.com"
+symbol = "POL"
+
+[chains.optimism]
+name = "Optimism"
+chain_id = 10
+explorer = "https://optimistic.etherscan.io"
+symbol = "ETH"
+
+[chains.bsc]
+name = "BNB Smart Chain"
+chain_id = 56
+explorer = "https://bscscan.com"
+symbol = "BNB"
+
+[chains.avalanche]
+name = "Avalanche C-Chain"
+chain_id = 43114
+explorer = "https://snowscan.xyz"
+symbol = "AVAX"
+
+[chains.linea]
+name = "Linea"
+chain_id = 59144
+explorer = "https://lineascan.build"
+symbol = "ETH"
+
+[chains.scroll]
+name = "Scroll"
+chain_id = 534352
+explorer = "https://scrollscan.com"
+symbol = "ETH"
+
+[chains.zksync]
+name = "zkSync Era"
+chain_id = 324
+explorer = "https://explorer.zksync.io"
+symbol = "ETH"
+
+[chains.blast]
+name = "Blast"
+chain_id = 81457
+explorer = "https://blastscan.io"
+symbol = "ETH"

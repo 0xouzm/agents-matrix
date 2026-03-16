@@ -11,31 +11,31 @@ SKILLS: list[AgentSkill] = [
     AgentSkill(
         id="tx_decode",
         name="Decode Transaction",
-        description="Fetch and decode a transaction by hash — shows from, to, value, gas, and input data.",
-        tags=["transaction", "decode", "ethereum", "web3"],
+        description="Fetch and decode a transaction by hash on any supported EVM chain — shows from, to, value, gas, and input data.",
+        tags=["transaction", "decode", "evm", "multichain"],
         examples=[
             "Decode transaction 0xabc123...",
-            "What did this transaction do?",
+            "Decode tx 0xdef456... on arbitrum",
         ],
     ),
     AgentSkill(
         id="receipt_parse",
         name="Parse Receipt",
-        description="Get transaction receipt with status, gas usage analysis, and emitted event logs.",
-        tags=["receipt", "gas", "logs", "ethereum"],
+        description="Get transaction receipt with status, gas usage analysis, and emitted event logs on any EVM chain.",
+        tags=["receipt", "gas", "logs", "evm", "multichain"],
         examples=[
             "Show me the receipt for tx 0xabc123...",
-            "How much gas did this transaction use?",
+            "Receipt for 0xdef456... on base",
         ],
     ),
     AgentSkill(
         id="trace",
         name="Trace Transaction",
-        description="Trace the full execution of a transaction showing internal calls and state changes.",
-        tags=["trace", "debug", "execution", "ethereum"],
+        description="Trace the full execution of a transaction showing internal calls and state changes on any EVM chain.",
+        tags=["trace", "debug", "execution", "evm", "multichain"],
         examples=[
             "Trace the execution of tx 0xabc123...",
-            "Show internal calls for this transaction",
+            "Trace 0xdef456... on polygon",
         ],
     ),
     AgentSkill(
@@ -51,21 +51,21 @@ SKILLS: list[AgentSkill] = [
     AgentSkill(
         id="log_query",
         name="Query Logs",
-        description="Query event logs from a contract address with optional topic and block range filters.",
-        tags=["logs", "events", "contract", "ethereum"],
+        description="Query event logs from a contract address with optional topic and block range filters on any EVM chain.",
+        tags=["logs", "events", "contract", "evm", "multichain"],
         examples=[
-            "Show Transfer events from USDC contract",
-            "Query logs from 0x1234... in the last 100 blocks",
+            "Show Transfer events from USDC on ethereum",
+            "Query logs from 0x1234... on arbitrum",
         ],
     ),
     AgentSkill(
         id="block_info",
         name="Block Info",
-        description="Get block details by number, hash, or tag (latest, earliest, etc.).",
-        tags=["block", "chain", "ethereum"],
+        description="Get block details by number, hash, or tag on any supported EVM chain.",
+        tags=["block", "chain", "evm", "multichain"],
         examples=[
-            "Show me the latest block",
-            "Get info for block 18000000",
+            "Show me the latest block on base",
+            "Get info for block 18000000 on ethereum",
         ],
     ),
 ]
@@ -76,8 +76,9 @@ def build_agent_card() -> AgentCard:
     return AgentCard(
         name="Cast Transaction Agent",
         description=(
-            "Paid AI agent for Ethereum transaction analysis — decode transactions, "
-            "parse receipts, trace execution, query logs, and inspect blocks. "
+            "Paid AI agent for EVM chain transaction analysis — decode transactions, "
+            "parse receipts, trace execution, query logs, and inspect blocks across "
+            "Ethereum, Arbitrum, Base, Polygon, Optimism, BSC, and more. "
             "Powered by Foundry cast. Accepts USDC payment via x402 protocol."
         ),
         url=settings.base_url + "/",

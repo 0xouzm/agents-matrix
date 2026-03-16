@@ -11,7 +11,7 @@ cd "$(dirname "$0")/.."
 if [ ! -f .env ]; then
   echo "ERROR: .env file not found. Create one:"
   echo "  cp .env.example .env"
-  echo "  # Then set AM_LLM_API_KEY and AM_DEFAULT_RPC_URL"
+  echo "  # Then set AM_LLM_API_KEY and AM_RPC_ETHEREUM (+ other chains)"
   exit 1
 fi
 
@@ -19,7 +19,7 @@ fi
 set -a; source .env; set +a
 
 # Validate required vars
-for var in AM_LLM_API_KEY AM_DEFAULT_RPC_URL; do
+for var in AM_LLM_API_KEY AM_RPC_ETHEREUM; do
   if [ -z "${!var:-}" ]; then
     echo "ERROR: $var is not set in .env"
     exit 1

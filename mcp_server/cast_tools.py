@@ -10,7 +10,15 @@ import subprocess
 
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("cast", instructions="Foundry cast tools for Ethereum transaction analysis, decoding, and block queries.")
+from config.settings import get_chains
+
+mcp = FastMCP(
+    "cast",
+    instructions=(
+        "Foundry cast tools for EVM chain transaction analysis, decoding, "
+        "and block queries. Supports Ethereum, Arbitrum, Base, Polygon, and more."
+    ),
+)
 
 
 def _run_cli(*args: str) -> str | dict | list:
@@ -27,52 +35,60 @@ def _run_cli(*args: str) -> str | dict | list:
     return json.loads(result.stdout)
 
 
+def _resolve_chain(chain: str | None) -> str:
+    """Resolve chain slug to RPC URL via ChainRegistry."""
+    return get_chains().resolve_rpc(chain)
+
+
+# ── Chain Discovery ──
+
+
+@mcp.tool()
+def list_supported_chains() -> list[dict]:
+    """List all supported EVM chains and whether they have an RPC URL configured."""
+    return get_chains().list_chains()
+
+
 # ── Transaction ──
 
 
 @mcp.tool()
-def get_transaction(tx_hash: str, rpc_url: str | None = None) -> dict:
+def get_transaction(tx_hash: str, chain: str | None = None) -> dict:
     """Get full transaction details by hash (from, to, value, gas, input data, etc.).
 
     Args:
         tx_hash: The transaction hash to look up.
-        rpc_url: Ethereum RPC URL. Falls back to ETH_RPC_URL or AM_DEFAULT_RPC_URL env.
+        chain: Chain name (ethereum, arbitrum, base, polygon, etc.). Defaults to configured default.
     """
-    args = ["tx", "info", tx_hash]
-    if rpc_url:
-        args = ["-r", rpc_url] + args
-    return _run_cli(*args)
+    rpc_url = _resolve_chain(chain)
+    return _run_cli("-r", rpc_url, "tx", "info", tx_hash)
 
 
 @mcp.tool()
-def get_receipt(tx_hash: str, rpc_url: str | None = None) -> dict:
+def get_receipt(tx_hash: str, chain: str | None = None) -> dict:
     """Get transaction receipt (status, gas used, logs, contract address, etc.).
 
     Args:
         tx_hash: The transaction hash to look up.
-        rpc_url: Ethereum RPC URL. Falls back to ETH_RPC_URL or AM_DEFAULT_RPC_URL env.
+        chain: Chain name (ethereum, arbitrum, base, polygon, etc.). Defaults to configured default.
     """
-    args = ["receipt", "info", tx_hash]
-    if rpc_url:
-        args = ["-r", rpc_url] + args
-    return _run_cli(*args)
+    rpc_url = _resolve_chain(chain)
+    return _run_cli("-r", rpc_url, "receipt", "info", tx_hash)
 
 
 # ── Trace ──
 
 
 @mcp.tool()
-def trace_transaction(tx_hash: str, rpc_url: str | None = None) -> dict:
+def trace_transaction(tx_hash: str, chain: str | None = None) -> dict:
     """Trace a transaction execution showing internal calls and gas usage.
 
     Args:
         tx_hash: The transaction hash to trace.
-        rpc_url: Ethereum RPC URL. Falls back to ETH_RPC_URL or AM_DEFAULT_RPC_URL env.
+        chain: Chain name (ethereum, arbitrum, base, polygon, etc.). Defaults to configured default.
     """
-    args = ["decode", "trace", tx_hash]
-    if rpc_url:
-        args = ["-r", rpc_url] + args
-    return _run_cli(*args)
+    rpc_url = _resolve_chain(chain)
+    return _run_cli("-r", rpc_url, "decode", "trace", tx_hash)
 
 
 # ── Decode ──
@@ -107,7 +123,7 @@ def query_logs(
     sig: str | None = None,
     from_block: str | None = None,
     to_block: str | None = None,
-    rpc_url: str | None = None,
+    chain: str | None = None,
 ) -> list:
     """Query event logs from a contract address with optional filters.
 
@@ -116,17 +132,16 @@ def query_logs(
         sig: Event signature to filter (e.g. "Transfer(address,address,uint256)").
         from_block: Starting block number or tag.
         to_block: Ending block number or tag.
-        rpc_url: Ethereum RPC URL. Falls back to ETH_RPC_URL or AM_DEFAULT_RPC_URL env.
+        chain: Chain name (ethereum, arbitrum, base, polygon, etc.). Defaults to configured default.
     """
-    args = ["logs", "query", address]
+    rpc_url = _resolve_chain(chain)
+    args = ["-r", rpc_url, "logs", "query", address]
     if sig:
         args.extend(["--sig", sig])
     if from_block:
         args.extend(["--from-block", from_block])
     if to_block:
         args.extend(["--to-block", to_block])
-    if rpc_url:
-        args = ["-r", rpc_url] + args
     return _run_cli(*args)
 
 
@@ -138,7 +153,7 @@ def call_contract(
     to: str,
     sig: str,
     args: list[str] | None = None,
-    rpc_url: str | None = None,
+    chain: str | None = None,
 ) -> dict:
     """Call a contract function (read-only, no state change).
 
@@ -146,13 +161,12 @@ def call_contract(
         to: Target contract address.
         sig: Function signature (e.g. "balanceOf(address)").
         args: Function arguments.
-        rpc_url: Ethereum RPC URL. Falls back to ETH_RPC_URL or AM_DEFAULT_RPC_URL env.
+        chain: Chain name (ethereum, arbitrum, base, polygon, etc.). Defaults to configured default.
     """
-    cmd_args = ["decode", "call", to, sig]
+    rpc_url = _resolve_chain(chain)
+    cmd_args = ["-r", rpc_url, "decode", "call", to, sig]
     if args:
         cmd_args.extend(args)
-    if rpc_url:
-        cmd_args = ["-r", rpc_url] + cmd_args
     return _run_cli(*cmd_args)
 
 
@@ -160,14 +174,12 @@ def call_contract(
 
 
 @mcp.tool()
-def get_block(block: str = "latest", rpc_url: str | None = None) -> dict:
+def get_block(block: str = "latest", chain: str | None = None) -> dict:
     """Get block information by number, hash, or tag (latest, earliest, etc.).
 
     Args:
         block: Block number, hash, or tag. Defaults to "latest".
-        rpc_url: Ethereum RPC URL. Falls back to ETH_RPC_URL or AM_DEFAULT_RPC_URL env.
+        chain: Chain name (ethereum, arbitrum, base, polygon, etc.). Defaults to configured default.
     """
-    args = ["block", "info", block]
-    if rpc_url:
-        args = ["-r", rpc_url] + args
-    return _run_cli(*args)
+    rpc_url = _resolve_chain(chain)
+    return _run_cli("-r", rpc_url, "block", "info", block)

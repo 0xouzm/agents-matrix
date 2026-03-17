@@ -101,6 +101,7 @@ class ChainRegistry:
                 "symbol": info.symbol,
                 "testnet": info.testnet,
                 "configured": bool(os.environ.get(env_key)),
+                "default": slug == self._default_chain,
             })
         return result
 

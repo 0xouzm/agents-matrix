@@ -18,7 +18,13 @@ SYSTEM_PROMPT = (
     "Use the available tools to decode transactions, parse receipts, trace execution, "
     "query event logs, and inspect blocks. Each RPC tool accepts an optional 'chain' "
     "parameter (e.g. 'ethereum', 'arbitrum', 'base'). If the user mentions a chain, "
-    "pass it as the 'chain' argument. Use list_supported_chains to show available chains. "
+    "pass it as the 'chain' argument. If no chain is specified, omit the 'chain' "
+    "argument entirely — the server will use the configured default chain automatically. "
+    "In list_supported_chains results, 'configured: true' means that chain is ready to "
+    "use; 'configured: false' means no RPC URL is set for it (it is still a valid chain "
+    "slug but unavailable). The entry with 'default: true' is the active default chain. "
+    "IMPORTANT: Do NOT call list_supported_chains unless the user explicitly asks which "
+    "chains are available. For all other requests, just call the appropriate tool directly. "
     "Call tools as needed, then provide a clear, human-readable summary of the results."
 )
 
@@ -76,11 +82,13 @@ async def run_agent_loop(
 
         for tool_call in choice.message.tool_calls:
             fn = tool_call.function
+            fn.name = fn.name.strip()  # guard against model whitespace artifacts
             logger.info("Tool call [turn %d]: %s(%s)", turn + 1, fn.name, fn.arguments)
             try:
                 args = json.loads(fn.arguments) if fn.arguments else {}
                 result = await mcp_session.call_tool(fn.name, arguments=args)
                 content = _format_tool_result(result)
+                logger.info("Tool result [turn %d]: %s → %.500s", turn + 1, fn.name, content)
             except Exception as exc:
                 logger.warning("Tool %s failed: %s", fn.name, exc)
                 content = f"Error: {exc}"

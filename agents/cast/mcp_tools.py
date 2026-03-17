@@ -1,16 +1,17 @@
 """MCP server exposing Foundry cast operations via cli-anything-cast CLI.
 
-Community usage: claude mcp add cast -- uv run python -m mcp_server
+Community usage: claude mcp add cast -- uv run python -m mcp_entry
 """
 
 from __future__ import annotations
 
 import json
 import subprocess
+from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
-from config.settings import get_chains
+from agents_core.settings import ChainRegistry
 
 mcp = FastMCP(
     "cast",
@@ -20,14 +21,18 @@ mcp = FastMCP(
     ),
 )
 
+_chains: ChainRegistry | None = None
+
+
+def _get_chains() -> ChainRegistry:
+    global _chains
+    if _chains is None:
+        _chains = ChainRegistry(Path(__file__).parent / "config" / "chains.toml")
+    return _chains
+
 
 def _run_cli(*args: str) -> str | dict | list:
-    """Run cli-anything-cast with --json flag and return parsed output.
-
-    For commands that return JSON, parses and returns dict/list.
-    For plain-text commands (4byte-decode, sig, call, trace), returns
-    the structured dict that the harness wraps around the text output.
-    """
+    """Run cli-anything-cast with --json flag and return parsed output."""
     cmd = ["cli-anything-cast", "--json", *args]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     if result.returncode != 0:
@@ -37,19 +42,19 @@ def _run_cli(*args: str) -> str | dict | list:
 
 def _resolve_chain(chain: str | None) -> str:
     """Resolve chain slug to RPC URL via ChainRegistry."""
-    return get_chains().resolve_rpc(chain)
+    return _get_chains().resolve_rpc(chain)
 
 
-# ── Chain Discovery ──
+# -- Chain Discovery --
 
 
 @mcp.tool()
 def list_supported_chains() -> list[dict]:
     """List all supported EVM chains and whether they have an RPC URL configured."""
-    return get_chains().list_chains()
+    return _get_chains().list_chains()
 
 
-# ── Transaction ──
+# -- Transaction --
 
 
 @mcp.tool()
@@ -76,7 +81,7 @@ def get_receipt(tx_hash: str, chain: str | None = None) -> dict:
     return _run_cli("-r", rpc_url, "receipt", "info", tx_hash)
 
 
-# ── Trace ──
+# -- Trace --
 
 
 @mcp.tool()
@@ -91,7 +96,7 @@ def trace_transaction(tx_hash: str, chain: str | None = None) -> dict:
     return _run_cli("-r", rpc_url, "decode", "trace", tx_hash)
 
 
-# ── Decode ──
+# -- Decode --
 
 
 @mcp.tool()
@@ -114,7 +119,7 @@ def get_selector(signature: str) -> dict:
     return _run_cli("decode", "sig", signature)
 
 
-# ── Logs ──
+# -- Logs --
 
 
 @mcp.tool()
@@ -145,7 +150,7 @@ def query_logs(
     return _run_cli(*args)
 
 
-# ── Call ──
+# -- Call --
 
 
 @mcp.tool()
@@ -170,7 +175,7 @@ def call_contract(
     return _run_cli(*cmd_args)
 
 
-# ── Block ──
+# -- Block --
 
 
 @mcp.tool()

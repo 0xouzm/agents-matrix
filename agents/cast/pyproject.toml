@@ -1,0 +1,27 @@
+[project]
+name = "cast-agent"
+version = "0.1.0"
+description = "Cast Transaction Agent — multi-chain EVM analysis via Foundry cast"
+requires-python = ">=3.12"
+dependencies = [
+    "agents-core",
+    "cli-anything-cast",
+]
+
+[tool.uv]
+prerelease = "allow"
+
+[tool.uv.sources]
+agents-core = { workspace = true }
+cli-anything-cast = { path = "../../../../CLI-Anything/cast/agent-harness", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agent_config", "mcp_tools", "mcp_entry"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

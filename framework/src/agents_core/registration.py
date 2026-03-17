@@ -7,15 +7,28 @@ import sys
 
 from agent0_sdk import SDK
 
-from config.settings import get_settings
+from agents_core.settings import Settings
 
 logger = logging.getLogger(__name__)
 
 
-def register() -> None:
-    """Register the Cast Transaction agent on-chain (ERC-721 mint + IPFS metadata)."""
-    settings = get_settings()
+def register(
+    settings: Settings,
+    *,
+    name: str,
+    description: str,
+    skill: str = "data_engineering/data_transformation_pipeline",
+    domain: str = "technology/blockchain",
+) -> None:
+    """Register an agent on-chain (ERC-721 mint + IPFS metadata).
 
+    Args:
+        settings: Application settings (keys, RPC, etc.).
+        name: Agent display name.
+        description: Agent description for the registry.
+        skill: OASF skill identifier.
+        domain: OASF domain identifier.
+    """
     if not settings.private_key:
         logger.error("AM_PRIVATE_KEY is required for registration")
         sys.exit(1)
@@ -34,22 +47,15 @@ def register() -> None:
         pinataJwt=settings.pinata_jwt,
     )
 
-    agent = sdk.createAgent(
-        name="Cast Transaction Agent",
-        description=(
-            "Paid AI agent for Ethereum transaction analysis — decode transactions, "
-            "parse receipts, trace execution, query logs, and inspect blocks. "
-            "Powered by Foundry cast. Accepts USDC payment via x402 protocol."
-        ),
-    )
+    agent = sdk.createAgent(name=name, description=description)
 
     # A2A endpoint
     a2a_url = settings.base_url + "/.well-known/agent-card.json"
     agent.setA2A(a2a_url)
 
     # OASF skills and domains
-    agent.addSkill("data_engineering/data_transformation_pipeline", validate_oasf=True)
-    agent.addDomain("technology/blockchain", validate_oasf=True)
+    agent.addSkill(skill, validate_oasf=True)
+    agent.addDomain(domain, validate_oasf=True)
 
     # Payment support
     agent.setX402Support(True)
@@ -75,8 +81,3 @@ def register() -> None:
     logger.info("Agent registered!")
     logger.info("  Agent ID:  %s", reg.agentId)
     logger.info("  Agent URI: %s", reg.agentURI)
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
-    register()

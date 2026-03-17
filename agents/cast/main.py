@@ -7,8 +7,9 @@ from pathlib import Path
 
 import uvicorn
 
-from config.settings import get_settings, get_pricing
-from server.app import create_app
+from agents_core.app import create_app
+from agents_core.settings import get_settings, Pricing
+from agent_config import SYSTEM_PROMPT, build_agent_card
 
 
 def setup_logging(log_dir: Path) -> None:
@@ -18,18 +19,24 @@ def setup_logging(log_dir: Path) -> None:
         format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
         handlers=[
             logging.StreamHandler(),
-            logging.FileHandler(log_dir / "agents-matrix.log"),
+            logging.FileHandler(log_dir / "cast-agent.log"),
         ],
     )
 
 
 def main() -> None:
     settings = get_settings()
-    pricing = get_pricing()
+    pricing = Pricing(Path(__file__).parent / "config" / "pricing.toml")
 
     setup_logging(Path("logs"))
 
-    app = create_app(settings, pricing)
+    app = create_app(
+        settings,
+        pricing,
+        agent_card=build_agent_card(settings),
+        mcp_module="mcp_entry",
+        system_prompt=SYSTEM_PROMPT,
+    )
     uvicorn.run(app, host=settings.host, port=settings.port, log_level="info")
 
 

@@ -4,27 +4,45 @@ from __future__ import annotations
 
 import logging
 
+from a2a.types import AgentCard
 from fastapi import FastAPI
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.tasks import InMemoryTaskStore
 from x402.http.middleware.fastapi import PaymentMiddlewareASGI
 
-from config.settings import Settings, Pricing
-from server.agent_card import build_agent_card
-from server.payment import build_resource_server, build_route_config
-from executor.cast_executor import CastExecutor
+from agents_core.settings import Settings, Pricing
+from agents_core.payment import build_resource_server, build_route_config
+from agents_core.executor import MCPAgentExecutor
 
 logger = logging.getLogger(__name__)
 
 
-def create_app(settings: Settings, pricing: Pricing) -> FastAPI:
-    """Build the full application stack."""
-    app = FastAPI(title="Cast Transaction Agent", version="0.1.0")
+def create_app(
+    settings: Settings,
+    pricing: Pricing,
+    *,
+    agent_card: AgentCard,
+    mcp_module: str,
+    system_prompt: str,
+) -> FastAPI:
+    """Build the full application stack.
 
-    # ── A2A agent ──
-    agent_card = build_agent_card()
-    executor = CastExecutor(settings=settings)
+    Args:
+        settings: Application settings.
+        pricing: Per-skill pricing config.
+        agent_card: A2A AgentCard describing this agent's skills.
+        mcp_module: Python module name for the MCP server (e.g. "mcp_entry").
+        system_prompt: System prompt for the LLM agent loop.
+    """
+    app = FastAPI(title=agent_card.name, version=agent_card.version or "0.1.0")
+
+    # -- A2A agent --
+    executor = MCPAgentExecutor(
+        settings=settings,
+        mcp_module=mcp_module,
+        system_prompt=system_prompt,
+    )
     request_handler = DefaultRequestHandler(
         agent_executor=executor,
         task_store=InMemoryTaskStore(),
@@ -35,7 +53,7 @@ def create_app(settings: Settings, pricing: Pricing) -> FastAPI:
     )
     a2a_app.add_routes_to_app(app)
 
-    # ── x402 payment gate ──
+    # -- x402 payment gate --
     if settings.wallet_address:
         resource_server = build_resource_server(settings)
         route_config = build_route_config(settings, pricing)
@@ -44,9 +62,11 @@ def create_app(settings: Settings, pricing: Pricing) -> FastAPI:
     else:
         logger.warning("No wallet address configured — x402 payment gate DISABLED")
 
-    # ── Utility endpoints ──
+    # -- Utility endpoints --
+    service_name = agent_card.name.lower().replace(" ", "-")
+
     @app.get("/health")
     async def health() -> dict[str, str]:
-        return {"status": "ok", "service": "cast-transaction-agent"}
+        return {"status": "ok", "service": service_name}
 
     return app

@@ -1,0 +1,23 @@
+[project]
+name = "agents-core"
+version = "0.1.0"
+description = "Shared framework for agents-matrix: A2A + x402 + MCP agent executor"
+requires-python = ">=3.12"
+dependencies = [
+    "a2a-sdk[http-server]>=0.3.25",
+    "x402[fastapi,httpx,evm]>=2.3.0",
+    "agent0-sdk>=1.6.0",
+    "openai>=1.30.0",
+    "mcp[cli]>=1.26.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "pydantic-settings>=2.7.0",
+    "tomli>=2.2.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agents_core"]

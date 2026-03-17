@@ -35,3 +35,6 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# uv lock (workspace)
+uv.lock

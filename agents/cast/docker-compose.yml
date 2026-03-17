@@ -1,8 +1,8 @@
 services:
   cast-agent:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: agents/cast/Dockerfile
     ports:
       - "${AM_PORT:-9000}:9000"
     env_file:

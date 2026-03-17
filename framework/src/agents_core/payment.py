@@ -7,7 +7,7 @@ from x402.http.types import RouteConfig
 from x402.mechanisms.evm.exact import ExactEvmServerScheme
 from x402.server import x402ResourceServer
 
-from config.settings import Settings, Pricing
+from agents_core.settings import Settings, Pricing
 
 
 def build_resource_server(settings: Settings) -> x402ResourceServer:
@@ -37,6 +37,6 @@ def build_route_config(settings: Settings, pricing: Pricing) -> dict[str, RouteC
                 ),
             ],
             mime_type="application/json",
-            description="A2A task execution — Cast transaction analysis",
+            description="A2A task execution",
         ),
     }

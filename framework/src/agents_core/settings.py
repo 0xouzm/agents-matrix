@@ -13,26 +13,26 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="AM_", env_file=".env", extra="ignore")
 
-    # ── Server ──
+    # -- Server --
     host: str = "0.0.0.0"
     port: int = 9000
     base_url: str = "http://localhost:9000"
 
-    # ── Cast (Foundry) — multi-chain ──
+    # -- Chain (multi-chain) --
     default_chain: str = "ethereum"
 
-    # ── x402 Payment ──
+    # -- x402 Payment --
     wallet_address: str = ""
     facilitator_url: str = "https://x402.org/facilitator"
     chain_network: str = "eip155:84532"
 
-    # ── ERC-8004 Registration ──
+    # -- ERC-8004 Registration --
     private_key: str = ""
     chain_id: int = 84532
     rpc_url: str = ""
     pinata_jwt: str = ""
 
-    # ── LLM (agent loop — OpenAI-compatible API) ──
+    # -- LLM (agent loop — OpenAI-compatible API) --
     llm_api_key: str = ""
     llm_base_url: str = "https://api.deepseek.com"
     llm_model: str = "deepseek-chat"
@@ -151,10 +151,10 @@ def get_settings() -> Settings:
 
 
 @lru_cache
-def get_pricing() -> Pricing:
-    return Pricing()
+def get_pricing(path: Path | None = None) -> Pricing:
+    return Pricing(path)
 
 
 @lru_cache
-def get_chains() -> ChainRegistry:
-    return ChainRegistry()
+def get_chains(path: Path | None = None) -> ChainRegistry:
+    return ChainRegistry(path)

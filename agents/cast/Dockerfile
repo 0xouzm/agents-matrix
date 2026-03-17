@@ -24,15 +24,20 @@ RUN git clone --depth 1 --branch ${HARNESS_REF} --filter=blob:none --sparse \
     cp -r cast/agent-harness /app/cast-harness && \
     rm -rf /tmp/cli-anything
 
-# Copy application code
-COPY . .
+# Copy workspace root + framework + this agent
+# NOTE: build context is agents-matrix/ root (set in docker-compose.yml)
+COPY pyproject.toml /app/pyproject.toml
+COPY framework /app/framework
+COPY agents/cast /app/agents/cast
 
 # Rewrite path dependency for Docker context
-RUN sed -i 's|path = "../../CLI-Anything/cast/agent-harness"|path = "cast-harness"|' pyproject.toml
+RUN sed -i 's|path = "../../../../CLI-Anything/cast/agent-harness"|path = "/app/cast-harness"|' /app/agents/cast/pyproject.toml
 
 # Install dependencies
-RUN uv lock --prerelease=allow && uv sync --prerelease=allow
+RUN cd /app && uv lock --prerelease=allow && uv sync --prerelease=allow --package cast-agent
+
+WORKDIR /app/agents/cast
 
 EXPOSE 9000
 
-CMD ["uv", "run", "python", "main.py"]
+CMD ["uv", "run", "--package", "cast-agent", "python", "main.py"]

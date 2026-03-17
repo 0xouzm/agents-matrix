@@ -1,11 +1,27 @@
-"""Build the A2A AgentCard with Cast transaction analysis skill definitions."""
+"""Cast Transaction Agent — skill definitions, system prompt, agent card."""
 
 from __future__ import annotations
 
 from a2a.types import AgentCard, AgentSkill, AgentCapabilities
 
-from config.settings import get_settings
+from agents_core.settings import Settings
 
+SYSTEM_PROMPT = (
+    "You are a blockchain transaction analysis agent powered by Foundry cast. "
+    "You support multiple EVM chains: Ethereum, Arbitrum, Base, Polygon, Optimism, "
+    "BSC, Avalanche, Linea, Scroll, zkSync, and Blast. "
+    "Use the available tools to decode transactions, parse receipts, trace execution, "
+    "query event logs, and inspect blocks. Each RPC tool accepts an optional 'chain' "
+    "parameter (e.g. 'ethereum', 'arbitrum', 'base'). If the user mentions a chain, "
+    "pass it as the 'chain' argument. If no chain is specified, omit the 'chain' "
+    "argument entirely — the server will use the configured default chain automatically. "
+    "In list_supported_chains results, 'configured: true' means that chain is ready to "
+    "use; 'configured: false' means no RPC URL is set for it (it is still a valid chain "
+    "slug but unavailable). The entry with 'default: true' is the active default chain. "
+    "IMPORTANT: Do NOT call list_supported_chains unless the user explicitly asks which "
+    "chains are available. For all other requests, just call the appropriate tool directly. "
+    "Call tools as needed, then provide a clear, human-readable summary of the results."
+)
 
 SKILLS: list[AgentSkill] = [
     AgentSkill(
@@ -71,8 +87,7 @@ SKILLS: list[AgentSkill] = [
 ]
 
 
-def build_agent_card() -> AgentCard:
-    settings = get_settings()
+def build_agent_card(settings: Settings) -> AgentCard:
     return AgentCard(
         name="Cast Transaction Agent",
         description=(

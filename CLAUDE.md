@@ -1,8 +1,43 @@
-# Agents Matrix — Cast Transaction Agent
+# Agents Matrix
 
-Paid Agent-as-a-Service platform — multi-chain EVM transaction analysis via A2A protocol + x402 payment.
+Multi-agent platform — each agent wraps a CLI tool as a paid Agent-as-a-Service via A2A protocol + x402 payment.
 
-## Architecture
+## Vision
+
+The goal is to build **many agents**, each wrapping a different CLI tool from the [CLI-Anything](https://github.com/0xouzm/CLI-Anything) repo. Each agent is an independent, paid service that exposes CLI capabilities through natural language via the A2A protocol.
+
+```
+CLI-Anything repo (tool source)
+  ├── cast/agent-harness/       → Cast Transaction Agent  (live)
+  ├── <tool-2>/agent-harness/   → Agent 2  (planned)
+  ├── <tool-3>/agent-harness/   → Agent 3  (planned)
+  └── ...
+```
+
+## Adding a New Agent
+
+Each agent follows the same pattern. Only these layers are tool-specific:
+
+| Layer | What to build | Generic? |
+|-------|---------------|----------|
+| CLI harness | `CLI-Anything/<tool>/agent-harness/` — subprocess wrappers, JSON normalization | Per-tool |
+| MCP tools | `mcp_server/<tool>_tools.py` — `@mcp.tool()` functions calling the harness via subprocess | Per-tool |
+| Agent card | `server/agent_card.py` — skill definitions, descriptions, tags | Per-tool |
+| System prompt | `agent/loop.py` — SYSTEM_PROMPT describing tool capabilities | Per-tool |
+| Dockerfile | Install the CLI binary (e.g. Foundry, solc, etc.) | Per-tool |
+
+These layers are **reusable across all agents** (no changes needed):
+
+- `server/app.py` — FastAPI + A2A + x402 app factory
+- `executor/cast_executor.py` — A2A executor + MCP subprocess spawning
+- `agent/loop.py` — LLM tool-use loop logic (only prompt changes)
+- `config/settings.py` — Settings, ChainRegistry, Pricing
+- `server/payment.py` — x402 payment middleware
+- `register/register_agent.py` — ERC-8004 on-chain registration
+
+## Current Agent: Cast Transaction Agent
+
+Multi-chain EVM transaction analysis powered by Foundry cast.
 
 ```
 Client (A2A) → FastAPI + x402 middleware → CastExecutor → MCP Server → cli-anything-cast → Foundry cast

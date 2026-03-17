@@ -2,11 +2,13 @@
 
 A monorepo platform for building **paid AI agents** — each wrapping a CLI tool as an Agent-as-a-Service via [A2A protocol](https://github.com/google/A2A) + [x402 payment](https://www.x402.org/).
 
+Each agent is backed by a CLI harness from [CLI-Anything (HKUDS)](https://github.com/HKUDS/CLI-Anything) — a collection of agent-friendly CLI wrappers for real-world software tools. The harness outputs structured JSON, the agent wraps it as MCP tools, the framework exposes it as a paid A2A service.
+
 ```
-CLI-Anything repo (tool source)
-  ├── cast/agent-harness/       → Cast Transaction Agent  (live)
-  ├── <tool-2>/agent-harness/   → Agent 2  (planned)
-  └── ...
+CLI-Anything harness        agents-matrix agent
+────────────────────        ──────────────────────────────────────
+cast/agent-harness     →    agents/cast/    EVM transaction analysis  (live)
+<tool>/agent-harness   →    agents/<tool>/  <description>             (next)
 ```
 
 ## Architecture
@@ -155,7 +157,9 @@ claude mcp add cast -- uv run python -m mcp_entry
 
 ## Adding a New Agent
 
-1. Create a CLI harness in the [CLI-Anything](https://github.com/0xouzm/CLI-Anything) repo
+The source of truth for CLI harnesses is [CLI-Anything (HKUDS)](https://github.com/HKUDS/CLI-Anything). Pick an existing harness (Blender, ComfyUI, Audacity, LibreOffice, etc.) or write a new one following the same pattern — any CLI framework works as long as it supports `--json` structured output.
+
+1. Get or write a CLI harness (`<tool>/agent-harness/`) in the CLI-Anything repo
 2. Create `agents/<name>/` with:
 
 | File | Purpose |

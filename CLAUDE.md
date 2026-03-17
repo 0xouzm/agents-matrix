@@ -26,16 +26,30 @@ agents-matrix/
   pyproject.toml                ← uv workspace
 ```
 
+## CLI-Anything Integration
+
+Agents are backed by CLI harnesses from [CLI-Anything (HKUDS)](https://github.com/HKUDS/CLI-Anything) and our own [CLI-Anything fork](https://github.com/0xouzm/CLI-Anything). Each harness wraps a software tool as a structured CLI with `--json` output, making it trivially callable from MCP tools via `subprocess`.
+
+```
+CLI-Anything repo              agents-matrix
+─────────────────              ─────────────
+cast/agent-harness        →    agents/cast/      (live)
+<tool>/agent-harness      →    agents/<tool>/    (add next)
+```
+
+The harness can be written in any framework (CLI-Anything uses Click, but argparse, typer, etc. all work). The only requirement is structured `--json` output so MCP tools can parse results.
+
 ## Adding a New Agent
 
-1. Create `agents/<name>/` with these files:
+1. Get or write a CLI harness in the CLI-Anything repo (`<tool>/agent-harness/`)
+2. Create `agents/<name>/` with these files:
    - `agent_config.py` — SYSTEM_PROMPT, SKILLS, build_agent_card()
-   - `mcp_tools.py` — @mcp.tool() functions calling CLI harness
+   - `mcp_tools.py` — @mcp.tool() functions calling the CLI harness via subprocess
    - `mcp_entry.py` — `from mcp_tools import mcp; mcp.run()`
    - `main.py` — thin entry point using `agents_core.app.create_app()`
-   - `pyproject.toml` — depends on `agents-core` + CLI harness
+   - `pyproject.toml` — depends on `agents-core` + CLI harness (path or git dep)
    - `config/` — chains.toml, pricing.toml
-2. Framework (`agents-core`) handles: A2A server, x402 payment, LLM loop, MCP executor, registration
+3. Framework (`agents-core`) handles: A2A server, x402 payment, LLM loop, MCP executor, registration
 
 ## Current Agent: Cast Transaction Agent
 

@@ -14,6 +14,7 @@ The Docker image handles everything: Foundry cast, Python, cli-anything-cast har
 ### 1. Configure Environment
 
 ```bash
+cd agents/cast
 cp .env.example .env
 ```
 
@@ -29,6 +30,8 @@ AM_RPC_ARBITRUM=https://your-arbitrum-rpc.quiknode.pro/key/   # Add more chains 
 ### 2. Deploy
 
 ```bash
+cd agents/cast
+
 # Option A: one-line
 docker compose up -d --build
 
@@ -66,8 +69,13 @@ Only needed for development. Requires Foundry and uv on the host.
 # Install Foundry cast
 curl -L https://foundry.paradigm.xyz | bash && foundryup
 
-# Install Python dependencies (needs CLI-Anything repo cloned nearby)
-uv sync --prerelease=allow
+# Install Python dependencies (needs CLI-Anything repo cloned at ../../CLI-Anything)
+uv sync --prerelease=allow --all-packages
+
+# Configure
+cd agents/cast
+cp .env.example .env
+# Edit .env
 
 # Run
 uv run python main.py
@@ -89,13 +97,15 @@ Expected: agent card with 6 skills, version "0.1.0".
 ### Level 2: MCP Server (requires bare metal setup)
 
 ```bash
-uv run mcp dev mcp_server/cast_tools.py
+cd agents/cast
+uv run mcp dev mcp_tools.py
 ```
 
 Or add as Claude Code MCP server:
 
 ```bash
-claude mcp add cast -- uv run python -m mcp_server
+cd agents/cast
+claude mcp add cast -- uv run python -m mcp_entry
 ```
 
 ### Level 3: A2A Task (No Payment)
@@ -135,6 +145,7 @@ curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:9000/ \
 
 ```bash
 # Set AM_PRIVATE_KEY, AM_RPC_URL, AM_PINATA_JWT in .env
+cd agents/cast
 ./scripts/register.sh
 ```
 
@@ -150,26 +161,3 @@ curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:9000/ \
 | `502` from reverse proxy | App not ready | Wait for healthcheck; `docker compose logs -f` |
 | `402` on every request | Payment gate active | Unset `AM_WALLET_ADDRESS` for testing |
 | RPC errors | Bad RPC URL | Test with `curl -X POST <rpc_url> -d '{"jsonrpc":"2.0","method":"eth_blockNumber","id":1}'` |
-
-## Architecture
-
-```
-Client (A2A)
-    |
-    v
-FastAPI + x402 middleware (payment gate)
-    |
-    v
-CastExecutor (A2A AgentExecutor)
-    |  spawns stdio subprocess
-    v
-MCP Server (9 Cast tools, multi-chain)
-    |  subprocess calls
-    v
-cli-anything-cast CLI
-    |
-    v
-Foundry cast (tx, receipt, run, 4byte-decode, sig, logs, call, block)
-```
-
-The LLM agent loop sits between the executor and MCP server, using tool-use to understand intent and chain multiple tool calls as needed.

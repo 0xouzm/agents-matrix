@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from a2a.types import AgentCard, AgentSkill, AgentCapabilities
+from a2a.types import AgentCard, AgentSkill, AgentCapabilities, AgentInterface
 
 from agents_core.settings import Settings
 
@@ -89,10 +89,10 @@ def build_agent_card(settings: Settings) -> AgentCard:
             "validators across mainnet-beta, devnet, and testnet. "
             "Powered by solana CLI. Accepts USDC payment via x402 protocol."
         ),
-        url=settings.base_url + "/",
+        supported_interfaces=[AgentInterface(url=settings.base_url + "/")],
         version="0.1.0",
-        defaultInputModes=["text"],
-        defaultOutputModes=["text"],
-        capabilities=AgentCapabilities(streaming=False, pushNotifications=False),
+        default_input_modes=["text"],
+        default_output_modes=["text"],
+        capabilities=AgentCapabilities(streaming=False, push_notifications=False),
         skills=SKILLS,
     )

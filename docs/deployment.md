@@ -159,20 +159,16 @@ curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:9000/ \
 
 ```bash
 # Works on any server (no local uv/harness required)
-docker exec cast-cast-agent-1 /app/.venv/bin/python -c "
+# Container name pattern: <agent>-<agent>-agent-1  (e.g. cast-cast-agent-1, sui-sui-agent-1)
+docker exec $(docker ps -q -f name=cast-cast-agent) uv run python -c "
 from agents_core.settings import get_settings
 from agents_core.registration import register
+from agent_config import build_agent_card
 import logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s  %(message)s')
-register(
-    get_settings(),
-    name='Cast Transaction Agent',
-    description=(
-        'Paid AI agent for Ethereum transaction analysis — decode transactions, '
-        'parse receipts, trace execution, query logs, and inspect blocks. '
-        'Powered by Foundry cast. Accepts USDC payment via x402 protocol.'
-    ),
-)
+settings = get_settings()
+card = build_agent_card(settings)
+register(settings, name=card.name, description=card.description)
 "
 ```
 
@@ -181,9 +177,12 @@ Requires `AM_PRIVATE_KEY`, `AM_RPC_URL`, and `AM_PINATA_JWT` set in `.env`.
 On success you'll see:
 ```
 INFO  Agent registered!
+INFO    TX Hash:   0xabc123...
 INFO    Agent ID:  <chain_id>:<id>
 INFO    Agent URI: ipfs://...
 ```
+
+> **Note:** The `Registered` on-chain event always has an empty `agentURI` — this is normal. The URI is set in a separate `URIUpdated` transaction. Verify the final state with `tokenURI(<agentId>)` on the identity registry contract (`0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`).
 
 ---
 
@@ -235,6 +234,7 @@ curl -s https://aliasai.io/cast/.well-known/agent-card.json | python3 -m json.to
 | Container exits: `AgentCapabilities has no "pushNotifications" field` | `a2a-sdk 1.0.0` renamed field | Use `push_notifications=False` (snake_case) |
 | Container exits: `AgentCard has no "url" field` | `a2a-sdk 1.0.0` removed `url` from AgentCard | Use `supported_interfaces=[AgentInterface(url=...)]` instead |
 | `register.sh` fails: `Distribution not found at: file:///home/CLI-Anything/...` | Local harness path doesn't exist on server | Run registration inside Docker container (see Level 5 above) |
+| Docker build fails: `curl: (22) ... 404` on sui binary download | `SUI_VERSION` in `agents/sui/Dockerfile` is outdated | Update `ARG SUI_VERSION=vX.Y.Z` to the latest mainnet release from [github.com/MystenLabs/sui/releases](https://github.com/MystenLabs/sui/releases) |
 | `AuthenticationError` | Bad API key | Verify `AM_LLM_API_KEY` in `.env` |
 | `500` on `POST /` with `Facilitator get_supported failed (401)` | CDP JWT auth wrong — ES256 or wrong claims | CDP keys use **EdDSA** (Ed25519), `uri` (singular string), `aud: ["cdp_service"]`; see `payment.py` |
 | `403` on `/.well-known/agent-card.json` via nginx | `location ~ /\.` deny rule intercepts path | Use `location ^~ /cast/` (with `^~`) to take priority over regex rules |

@@ -6,7 +6,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Sui CLI (pre-built binary)
-ARG SUI_VERSION=v1.46.1
+ARG SUI_VERSION=v1.67.3
 RUN curl -fsSL "https://github.com/MystenLabs/sui/releases/download/mainnet-${SUI_VERSION}/sui-mainnet-${SUI_VERSION}-ubuntu-x86_64.tgz" \
       -o /tmp/sui.tgz && \
     tar -xzf /tmp/sui.tgz -C /usr/local/bin && \

@@ -93,9 +93,11 @@ def register(
     # Register on-chain (mint ERC-721 + upload metadata to IPFS)
     logger.info("Registering agent on chain %d...", settings.chain_id)
     reg_tx = agent.registerIPFS()
-    reg = reg_tx.wait_confirmed(timeout=180).result
+    confirmed = reg_tx.wait_confirmed(timeout=180)
+    reg = confirmed.result
 
     logger.info("Agent registered!")
+    logger.info("  TX Hash:   %s", confirmed.receipt.get("transactionHash", b"").hex())
     logger.info("  Agent ID:  %s", reg.agentId)
     logger.info("  Agent URI: %s", reg.agentURI)
 
